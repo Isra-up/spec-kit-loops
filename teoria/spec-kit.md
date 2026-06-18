@@ -1,76 +1,135 @@
 # Spec-kit — Teoría
 
+Fuente: https://github.com/github/spec-kit
+
 ## ¿Qué es?
 
-Spec-kit es una forma de escribir **especificaciones estructuradas** que le dicen
-a Claude Code exactamente qué construir, cómo comportarse y qué reglas seguir
-dentro de un proyecto.
+Spec-kit es un toolkit open source creado por **GitHub** que implementa
+**Spec-Driven Development (SDD)** — una metodología donde las especificaciones
+se convierten en el corazón del desarrollo, no solo en documentación desechable.
 
-En lugar de darle instrucciones sueltas en cada conversación, defines el contexto
-una sola vez y Claude lo respeta en todas las sesiones.
+La idea central: en lugar de empezar a codear directamente ("vibe coding"),
+primero escribes una especificación clara y estructurada, y luego el AI
+la ejecuta para generar el código.
+
+> "Specifications become executable" — las specs generan implementaciones,
+> no solo las guían.
 
 ---
 
-## Componente principal: CLAUDE.md
+## El problema que resuelve
 
-El archivo `CLAUDE.md` en la raíz del proyecto es el corazón de Spec-kit.
-Claude Code lo lee automáticamente al iniciar cada sesión en ese directorio.
+El desarrollo tradicional con AI tiende a ser improvisado:
+- Le dices al AI "construye X" sin contexto
+- El AI adivina la arquitectura, el stack, los requisitos
+- El resultado es inconsistente o no es lo que querías
 
-### ¿Qué va en CLAUDE.md?
+Spec-kit fuerza a pensar primero, codear después.
 
-- **Descripción del proyecto**: qué hace, para qué sirve
-- **Stack tecnológico**: lenguajes, frameworks, herramientas
-- **Convenciones de código**: estilo, nomenclatura, estructura de carpetas
-- **Comandos frecuentes**: cómo correr tests, builds, deploys
-- **Restricciones**: qué NO debe hacer Claude (ej. no modificar ciertos archivos)
-- **Contexto del equipo**: quién es el usuario, nivel técnico, preferencias
+---
 
-### Ejemplo mínimo
+## Flujo de trabajo (comandos slash)
 
-```markdown
-# Mi Proyecto
+### Comandos principales (en orden)
 
-## Stack
-- Python 3.11
-- FastAPI
-- PostgreSQL
+| Comando | ¿Qué hace? |
+|---|---|
+| `/speckit.constitution` | Define los principios y reglas del proyecto |
+| `/speckit.specify` | Describe QUÉ quieres construir (sin hablar de tech) |
+| `/speckit.clarify` | Aclara requisitos ambiguos antes de planear |
+| `/speckit.plan` | Define el stack técnico y la arquitectura |
+| `/speckit.tasks` | Divide el plan en tareas accionables |
+| `/speckit.implement` | El AI ejecuta todas las tareas y construye |
+| `/speckit.converge` | Revisa el código vs la spec y detecta lo que falta |
 
-## Comandos
-- Correr servidor: `uvicorn main:app --reload`
-- Tests: `pytest`
+### Comandos opcionales
 
-## Reglas
-- Siempre usar type hints en funciones
-- No modificar archivos en /legacy/
+| Comando | ¿Qué hace? |
+|---|---|
+| `/speckit.analyze` | Verifica consistencia entre spec, plan y tareas |
+| `/speckit.checklist` | Genera listas de validación de calidad |
+| `/speckit.taskstoissues` | Convierte tareas en GitHub Issues |
+
+---
+
+## Ejemplo real del flujo
+
+```bash
+# 1. Principios del proyecto
+/speckit.constitution Create principles focused on code quality and testing
+
+# 2. Qué quiero construir (sin mencionar tech stack)
+/speckit.specify Build an app to organize photos into albums grouped by date,
+with drag-and-drop reordering
+
+# 3. Aclarar dudas antes de planear
+/speckit.clarify
+
+# 4. Definir el cómo técnico
+/speckit.plan Use Vite, vanilla HTML/CSS/JS, SQLite for metadata
+
+# 5. Generar tareas
+/speckit.tasks
+
+# 6. Implementar todo
+/speckit.implement
 ```
 
 ---
 
-## Niveles de CLAUDE.md
+## Estructura que genera en tu proyecto
 
-Puedes tener varios archivos en distintas capas:
+```
+.specify/
+  memory/
+    constitution.md       ← principios del proyecto
+  templates/
+    spec-template.md
+    plan-template.md
+    tasks-template.md
+  scripts/bash/           ← scripts de automatización
 
-| Archivo | Alcance |
-|---|---|
-| `~/.claude/CLAUDE.md` | Global — aplica a todos tus proyectos |
-| `/proyecto/CLAUDE.md` | Proyecto — aplica solo a este repo |
-| `/proyecto/subcarpeta/CLAUDE.md` | Módulo — aplica solo a esa carpeta |
+specs/
+  001-nombre-feature/
+    spec.md               ← qué se construye y por qué
+    plan.md               ← cómo se construye (tech)
+    data-model.md         ← estructura de datos
+    tasks.md              ← lista de tareas
+    research.md           ← investigación del stack
 
-Claude los combina todos, del más general al más específico.
+CLAUDE.md                 ← generado automáticamente
+```
 
 ---
 
-## Beneficios
+## Instalación
 
-- No repetir instrucciones en cada sesión
-- Comportamiento consistente entre sesiones
-- Funciona como documentación viva del proyecto
-- Comparte reglas con el equipo (el archivo vive en git)
+Requiere `uv` (gestor de paquetes Python moderno):
+
+```bash
+uv tool install specify-cli --from git+https://github.com/github/spec-kit.git@vX.Y.Z
+specify init mi-proyecto --integration copilot
+```
+
+Funciona con Claude Code, GitHub Copilot y más de 30 agentes de AI.
 
 ---
 
-## Recursos para profundizar
+## Principio clave
 
-- Documentación oficial de Claude Code: sección "CLAUDE.md"
-- Skill `/init` en Claude Code: genera un CLAUDE.md automáticamente
-  analizando tu proyecto
+Spec-kit separa el **QUÉ** del **CÓMO**:
+
+- `/speckit.specify` → solo el qué (requisitos, user stories)
+- `/speckit.plan` → solo el cómo (stack, arquitectura)
+- `/speckit.implement` → ejecución
+
+Esta separación evita que el AI tome decisiones técnicas antes de que
+tú hayas pensado en los requisitos.
+
+---
+
+## Diferencia con CLAUDE.md
+
+CLAUDE.md es un concepto separado (documentación de contexto para Claude Code).
+Spec-kit lo genera automáticamente durante `/speckit.plan`, pero son herramientas
+distintas con propósitos distintos.
