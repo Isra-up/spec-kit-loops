@@ -10,12 +10,19 @@ Proyecto de aprendizaje sobre dos conceptos clave para el desarrollo asistido co
 ```
 spec-kit-loops/
 ├── teoria/
-│   ├── spec-kit.md       # Conceptos y fundamentos de Spec-kit
-│   └── loops.md          # Conceptos y fundamentos de Loops
-└── practica/             # Implementaciones (fase siguiente)
+│   ├── spec-kit.md           # Fundamentos, flujo, SDD en producción, quality gates
+│   └── loops.md              # Conceptos, 6 partes, memoria, escalera de autonomía
+└── practica/
+    └── prompts/              # Plantillas listas para copiar en cualquier proyecto
+        ├── 01-constitution.md
+        ├── 02-specify.md
+        ├── 03-plan.md
+        ├── 04-tasks.md
+        └── 05-implement.md
 ```
 
 ## Fases
 
-1. **Teoría** ← estamos aquí
-2. Implementación
+1. **Teoría** ✓
+2. **Prompts de referencia** ✓ ← estamos aquí
+3. Implementación práctica — aplicar el flujo en un proyecto real

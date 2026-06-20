@@ -133,3 +133,195 @@ tú hayas pensado en los requisitos.
 CLAUDE.md es un concepto separado (documentación de contexto para Claude Code).
 Spec-kit lo genera automáticamente durante `/speckit.plan`, pero son herramientas
 distintas con propósitos distintos.
+
+### CLAUDE.md minimalista
+
+El patrón recomendado es mantener CLAUDE.md corto y hacer que apunte a los
+artefactos de la spec, en lugar de duplicar su contenido:
+
+```markdown
+<!-- SPECKIT START -->
+For additional context, read the current plan:
+`specs/001-nombre-feature/plan.md`
+
+Supporting artifacts:
+- Spec: `specs/001-nombre-feature/spec.md`
+- Data model: `specs/001-nombre-feature/data-model.md`
+- Constitution: `.specify/memory/constitution.md`
+<!-- SPECKIT END -->
+```
+
+La regla: si algo ya está escrito en la spec, no lo copies en CLAUDE.md.
+Un CLAUDE.md que crece indefinidamente es síntoma de que la spec no existe.
+
+---
+
+## SDD en producción
+
+Fuente: https://github.com/JoaquinRuiz/spec-driven-development-produccion
+
+### El escenario
+
+Tienes un proyecto que ya está en producción — con tests, usuarios y convenciones
+establecidas — y quieres añadir features con AI sin romper nada. No hace falta
+reescribir ni migrar: SDD se mete dentro del proyecto existente.
+
+```bash
+specify init --here --integration claude
+# si el directorio da problemas por no estar vacío:
+specify init --here --integration claude --force
+# (tener el proyecto en git antes de usar --force)
+```
+
+La diferencia con un proyecto nuevo es un solo flag: `--here`.
+
+---
+
+### La constitución fotografía, no inventa
+
+En un proyecto existente, la constitución no crea reglas nuevas:
+**documenta como ley las convenciones que el proyecto ya sigue**.
+
+El agente lee el código antes de escribir nada. Si el prompt dice "57 tests"
+pero el proyecto tiene 98, el agente corrige el dato — no se fía del input
+humano, se fía del código real.
+
+> La constitución son los raíles. El agente solo puede moverse dentro de ellos.
+
+---
+
+### Constitución versionada
+
+Una constitución seria tiene versión semántica, fecha de ratificación y un
+proceso explícito para enmiendas. No es una lista de preferencias — es un
+contrato que puede evolucionar de forma controlada.
+
+**Versión semántica:**
+
+| Tipo de cambio | Cuándo |
+|---|---|
+| **MAJOR** | Eliminación o redefinición incompatible de un principio |
+| **MINOR** | Añadir un principio nuevo o ampliar materialmente la guía |
+| **PATCH** | Aclaraciones, correcciones de redacción sin cambio semántico |
+
+**Proceso de enmienda:**
+1. Rediseñar la propuesta para cumplir el principio existente
+2. Si no es posible, documentar la justificación y proponer una enmienda
+3. La propuesta **no se implementa** mientras contradiga un principio vigente
+4. Las excepciones temporales se registran con alcance y fecha de revisión — no existen excepciones implícitas
+
+**Cabecera mínima de una constitución versionada:**
+
+```markdown
+# Nombre del Proyecto — Constitución
+
+[principios...]
+
+**Version**: 1.0.0 | **Ratified**: YYYY-MM-DD | **Last Amended**: YYYY-MM-DD
+```
+
+---
+
+### Quality gates
+
+Dos comandos de validación que conviene ejecutar antes de avanzar de fase:
+
+| Comando | Cuándo usarlo | Qué detecta |
+|---|---|---|
+| `/speckit.clarify` | Después de `/speckit.specify` | Ambigüedades en requisitos antes de planear |
+| `/speckit.analyze` | Después de `/speckit.plan` | Incoherencias entre constitución, spec y plan |
+
+Ejecutarlos evita que el AI planifique o implemente sobre suposiciones incorrectas.
+
+**Las clarifications quedan en la spec.**
+Las preguntas que hace el agente y sus respuestas se registran en `spec.md`
+como decisiones de negocio versionadas — no desaparecen al cerrar el chat:
+
+```markdown
+## Clarifications
+
+### Session YYYY-MM-DD
+
+- Q: ¿Cómo calcular el umbral de rebalanceo? → A: Desviación absoluta en
+  puntos porcentuales (por defecto 5 p.p., configurable).
+- Q: ¿Qué ventana histórica usar? → A: 10 años; si faltan datos, informar
+  la limitación, no inventar valores.
+```
+
+Esto convierte las ambigüedades resueltas en parte permanente de la documentación.
+
+---
+
+### Flujo completo para proyecto existente
+
+```bash
+# Instalar spec-kit en el proyecto
+specify init --here --integration claude
+
+# Dentro de Claude Code, en orden:
+/speckit.constitution   # fotografiar las reglas actuales
+/speckit.specify        # el qué y el porqué (sin detalles técnicos)
+/speckit.clarify        # quality gate: resolver ambigüedades
+/speckit.plan           # el cómo, respetando la constitución
+/speckit.analyze        # quality gate: validación cruzada
+/speckit.tasks          # tareas ordenadas por dependencias
+/speckit.implement      # ejecución
+
+# Verificar que nada se rompió
+pytest -q
+```
+
+---
+
+### Verificación post-implementación
+
+Tres comprobaciones que confirman que el agente respetó las convenciones:
+
+```bash
+# 1. Todos los tests (originales + nuevos) en verde
+pytest -q
+
+# 2. Las vistas no tocan la base de datos (patrón Repository)
+grep -rn "db.session" app/views/*.py | wc -l   # debe ser 0
+
+# 3. Ver exactamente qué cambió
+git diff --stat
+```
+
+Esto es la diferencia entre decirle al agente "hazme X" y rezar,
+y darle un marco donde solo puede hacerlo bien.
+
+---
+
+## Degradación limpia
+
+Fuente: https://github.com/JoaquinRuiz/roboadvisor-sdd
+
+Cuando el sistema depende de un componente no crítico (un LLM, una API externa,
+un servicio de caché), diseñarlo para que funcione sin ese componente es parte
+de la constitución, no una decisión de implementación de último minuto.
+
+**El patrón:**
+- La capa determinista (lógica de negocio, cálculos, decisiones) funciona siempre
+- La capa de mejora (LLM, explicaciones, enriquecimiento) puede fallar
+- El sistema muestra lo que tiene, no un error
+
+**Ejemplo aplicado:**
+```
+Sin Ollama disponible:
+  ✓ Muestra la cartera y las métricas
+  ✗ No muestra la explicación en lenguaje natural
+  → Nunca bloquea al usuario
+```
+
+**Cómo incluirlo en la constitución:**
+
+```markdown
+### Degradación limpia (MUST)
+Si [componente X] no está disponible, el sistema MUST seguir funcionando
+mostrando [funcionalidad core]. Solo [funcionalidad de mejora] queda
+deshabilitada. Nunca se muestra un error genérico al usuario.
+```
+
+Este principio va en la constitución, no en el plan técnico, porque es
+una decisión de negocio: ¿qué le prometemos al usuario cuando algo falla?
