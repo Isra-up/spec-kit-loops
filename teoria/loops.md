@@ -119,6 +119,51 @@ el loop produzca consistentemente trabajo que aprobarías sin cambios.
 
 ---
 
+## ¿Necesitas un loop? El test de 4 preguntas
+
+Fuente: Anatoli Kopadze — "Loops explained: Claude, GPT, Mira and what actually works"
+
+Antes de construir un loop, verifica que las 4 sean verdad. Si falla una, quédate con un buen prompt manual:
+
+| Pregunta | Si la respuesta es NO… |
+|---|---|
+| ¿La tarea se repite al menos semanalmente? | El costo de setup nunca se amortiza |
+| ¿Algo puede rechazar automáticamente el output malo? | El loop solo da vueltas sin avanzar |
+| ¿El agente puede completar el trabajo de principio a fin solo? | Te devuelve la mitad a ti de todas formas |
+| ¿"Terminado" es objetivo, no un juicio de valor? | Un humano sigue ganando en ese paso |
+
+---
+
+## La métrica que importa: costo por cambio aceptado
+
+No midas tokens gastados ni loops ejecutados. Mide cuántos resultados del loop **aceptas sin modificar**.
+
+> Si el loop te da 10 resultados y tiras 6, estás haciendo tú el trabajo que el loop debía ahorrarte.
+
+**Por debajo del 50% de tasa de aceptación, el loop cuesta más de lo que da.**
+
+Úsalo como semáforo antes de escalar:
+- ≥ 80% → el loop está listo para subir de nivel de autonomía
+- 50–80% → ajusta el verificador o los criterios de éxito
+- < 50% → detén el loop y rediseña; no lo pongas en schedule todavía
+
+---
+
+## El orden correcto para construir un loop
+
+Skippear pasos es exactamente cómo los loops se queman mientras duermes:
+
+```
+1. Haz UNA corrida manual confiable primero
+2. Conviértela en una skill (guarda las instrucciones en un archivo)
+3. Envuelve la skill en un loop (agrega el gate + condición de parada)
+4. ENTONCES ponlo en un schedule
+```
+
+Primero prueba. Luego endurece. Luego automatiza.
+
+---
+
 ## Costos de tokens
 
 Un loop corriendo desatendido toda la noche puede generar una factura alta.
@@ -127,6 +172,8 @@ Antes de dejar correr cualquier loop sin supervisión:
 1. Córrelo manualmente 3-5 iteraciones y mide tokens por iteración
 2. Multiplica por el máximo de iteraciones = costo máximo por corrida
 3. Multiplica por frecuencia del cron = costo diario máximo
+
+El patrón escritor+revisor que sube la calidad también **duplica el costo**, porque dos modelos leen el trabajo en lugar de uno.
 
 Además: construye una **allowlist de comandos** para loops que ejecutan
 shell. Restringe solo a lo que la tarea necesita (`npm`, `git`, `ls`, `cat`).
